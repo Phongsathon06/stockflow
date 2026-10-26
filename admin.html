@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockFlow - แอดมิน รพ.สต.ศรีสุข</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
@@ -16,9 +17,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/th.js"></script>
-
-    <!-- Favicon / Logo บนแท็บเบราว์เซอร์ -->
-    <link rel="icon" type="image/png" href="logo.png">
 
     <!-- SheetJS (xlsx) Library -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -42,8 +40,11 @@
     <!-- Admin Content -->
     <header class="bg-slate-900 text-white shadow-md">
         <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div>
-                <h1 class="text-lg font-bold"><i class="fa-solid fa-sliders mr-2"></i>ระบบจัดการคลังพัสดุ - รพ.สต.ศรีสุข</h1>
+            <div class="flex items-center gap-3">
+                <img src="logo.png" alt="Logo" class="w-9 h-9 object-contain rounded-xl bg-white p-1 shadow-sm" onerror="this.style.display='none'">
+                <div>
+                    <h1 class="text-lg font-bold"><i class="fa-solid fa-sliders mr-2"></i>ระบบจัดการคลังพัสดุ - รพ.สต.ศรีสุข</h1>
+                </div>
             </div>
             <div class="flex items-center gap-2">
                 <button id="theme-toggle-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1">
@@ -623,11 +624,9 @@
 
             if (!name) return alert("กรุณากรอกชื่อพัสดุ");
 
-            // 🔍 ตรวจสอบว่ามีรายการพัสดุชื่อซ้ำกันในคลังหรือยัง (ไม่สนตัวพิมพ์เล็ก-ใหญ่)
             const existingItem = inventory.find(i => i.name.trim().toLowerCase() === name.toLowerCase());
 
             if (existingItem) {
-                // ถ้ามีชื่อซ้ำอยู่แล้ว ให้เอาน้ำจำนวนไปบวกเพิ่มเข้ากับของเดิม
                 const newStock = existingItem.stock + initialStock;
                 await updateItemStock(existingItem.id, newStock, supplier || existingItem.supplier);
 
@@ -645,7 +644,6 @@
                 document.getElementById('add-modal').classList.add('hidden');
                 alert(`✅ พบพัสดุชื่อ "${existingItem.name}" อยู่ในระบบแล้ว ระบบได้ทำการบวกเพิ่มจำนวน ${initialStock} เข้าไปในรายการเดิมให้เรียบร้อย!`);
             } else {
-                // ถ้ายังไม่มี ให้สร้างรายการใหม่ตามปกติ
                 const newItem = {
                     id: 'SKU-' + String(inventory.length + 1).padStart(3, '0'),
                     name: name,
