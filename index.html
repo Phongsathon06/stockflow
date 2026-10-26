@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockFlow - รพ.สต.ศรีสุข (เบิกพัสดุ)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Sarabun', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen pb-12 transition-colors duration-200">
+    <!-- Header -->
+    <header class="bg-emerald-700 dark:bg-emerald-900 text-white shadow-md transition-colors duration-200">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold"><i class="fa-solid fa-hospital mr-2"></i>ระบบเบิกเวชภัณฑ์ รพ.สต.ศรีสุข</h1>
+                <p class="text-xs text-emerald-100">StockFlow - ระบบจัดการคลังสินค้าอัจฉริยะ</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- ปุ่มสลับธีม สว่าง/มืด -->
+                <button id="theme-toggle-btn" class="bg-emerald-800 dark:bg-emerald-800 hover:bg-emerald-900 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i> <span id="theme-text">โหมดมืด</span>
+                </button>
+                <a href="admin.html" class="bg-emerald-800 hover:bg-emerald-900 text-xs px-3 py-2 rounded-lg font-medium transition">
+                    <i class="fa-solid fa-lock mr-1"></i> แอดมิน
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 mt-6">
+        
+        <!-- User Info Banner -->
+        <div class="bg-emerald-50 dark:bg-slate-800 border border-emerald-200 dark:border-slate-700 rounded-2xl p-4 mb-4 flex flex-col sm:flex-row justify-between items-center gap-3 transition-colors duration-200">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="w-10 h-10 bg-emerald-600 text-white rounded-full flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-user text-lg"></i>
+                </div>
+                <div class="w-full sm:w-auto">
+                    <div class="text-xs text-emerald-800 dark:text-emerald-400 font-medium">ผู้ใช้งานขณะนี้ / ผู้เบิก:</div>
+                    <div id="user-display" class="font-bold text-slate-800 dark:text-slate-100 text-base">ยังไม่ได้ระบุชื่อ</div>
+                </div>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+                <input type="text" id="global-user-input" placeholder="กรอกชื่อ-นามสกุล / ตำแหน่ง..." class="px-3 py-2 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-64 dark:text-white">
+                <button id="save-user-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-xl font-medium transition shrink-0">
+                    บันทึกชื่อ
+                </button>
+            </div>
+        </div>
+
+        <!-- Search & Filter Card -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 mb-6 border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row gap-3 transition-colors duration-200">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400"></i>
+                <input type="text" id="search-input" placeholder="ค้นหาชื่อเวชภัณฑ์..." class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
+            </div>
+            <div class="w-full md:w-64">
+                <select id="category-filter" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
+                    <option value="">-- ทุกหมวดหมู่ --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Items Grid -->
+        <div id="items-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="text-center py-10 text-slate-400 col-span-2">กำลังโหลดข้อมูลเวชภัณฑ์...</div>
+        </div>
+    </main>
+
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl dark:border dark:border-slate-700">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">ยืนยันการเบิกเวชภัณฑ์</h3>
+            <p id="modal-item-name" class="text-sm text-emerald-600 dark:text-emerald-400 font-medium mb-4">-</p>
+            
+            <div class="space-y-4">
+                <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span class="text-xs text-slate-500 dark:text-slate-400">ชื่อผู้เบิก:</span>
+                    <span id="modal-user-name" class="font-bold text-slate-800 dark:text-white ml-2">-</span>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">จำนวนที่ต้องการเบิก</label>
+                    <input type="number" id="checkout-qty" value="1" min="1" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
+                </div>
+                <input type="hidden" id="checkout-item-id">
+            </div>
+
+            <div class="flex space-x-2 mt-6">
+                <button id="cancel-checkout-btn" class="flex-1 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-sm transition">ยกเลิก</button>
+                <button id="confirm-checkout-btn" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium text-sm shadow-md transition">ยืนยันการเบิก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Integration -->
+    <script type="module">
+        import { getItems, updateItemStock, logCheckout } from './supabase.js';
+
+        let inventory = [];
+        let currentUser = localStorage.getItem('stockflow_user') || '';
+
+        // ระบบจัดการธีม (Dark / Light Mode)
+        const htmlElement = document.documentElement;
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                htmlElement.classList.add('dark');
+                themeIcon.className = "fa-solid fa-sun";
+                themeText.innerText = "โหมดสว่าง";
+                localStorage.setItem('theme', 'dark');
+            } else {
+                htmlElement.classList.remove('dark');
+                themeIcon.className = "fa-solid fa-moon";
+                themeText.innerText = "โหมดมืด";
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            applyTheme(savedTheme === 'dark');
+        } else {
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(systemPrefersDark);
+        }
+
+        themeToggleBtn.onclick = () => {
+            const isDark = !htmlElement.classList.contains('dark');
+            applyTheme(isDark);
+        };
+
+        function updateUIUser() {
+            const display = document.getElementById('user-display');
+            const input = document.getElementById('global-user-input');
+            if (currentUser) {
+                display.innerText = currentUser;
+                input.value = currentUser;
+            } else {
+                display.innerText = 'ยังไม่ได้ระบุชื่อ';
+                input.value = '';
+            }
+        }
+
+        document.getElementById('save-user-btn').onclick = () => {
+            const inputName = document.getElementById('global-user-input').value.trim();
+            if (!inputName) {
+                alert('กรุณากรอกชื่อ-นามสกุลก่อนบันทึก');
+                return;
+            }
+            currentUser = inputName;
+            localStorage.setItem('stockflow_user', currentUser);
+            updateUIUser();
+            alert('✅ บันทึกชื่อผู้เบิกเรียบร้อยแล้ว');
+        };
+
+        async function loadData() {
+            inventory = await getItems();
+            updateCategoryDropdown();
+            filterAndRender();
+        }
+
+        function updateCategoryDropdown() {
+            const select = document.getElementById('category-filter');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- ทุกหมวดหมู่ --</option>';
+            const categories = [...new Set(inventory.map(i => i.category).filter(Boolean))];
+            categories.forEach(cat => {
+                select.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+            select.value = currentVal;
+        }
+
+        function filterAndRender() {
+            const keyword = document.getElementById('search-input').value.toLowerCase();
+            const selectedCategory = document.getElementById('category-filter').value;
+
+            const filtered = inventory.filter(item => {
+                const matchKeyword = item.name.toLowerCase().includes(keyword) || (item.supplier && item.supplier.toLowerCase().includes(keyword));
+                const matchCategory = !selectedCategory || item.category === selectedCategory;
+                return matchKeyword && matchCategory;
+            });
+
+            renderItems(filtered);
+        }
+
+        function renderItems(items) {
+            const container = document.getElementById('items-container');
+            container.innerHTML = "";
+
+            if (items.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-slate-400 col-span-2">ไม่พบรายการเวชภัณฑ์ในระบบ</div>`;
+                return;
+            }
+
+            items.forEach(item => {
+                const isLow = item.stock <= item.min_stock;
+                container.innerHTML += `
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border ${isLow ? 'border-rose-300 dark:border-rose-900 bg-rose-50/30 dark:bg-rose-950/20' : 'border-slate-100 dark:border-slate-700'} flex justify-between items-center transition-colors duration-200">
+                        <div>
+                            <span class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-mono">${item.category || 'ทั่วไป'}</span>
+                            <h3 class="font-bold text-slate-800 dark:text-white mt-1">${item.name}</h3>
+                            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                คงเหลือ: <span class="font-bold ${isLow ? 'text-rose-600 dark:text-rose-400 text-base' : 'text-emerald-600 dark:text-emerald-400 text-sm'}">${item.stock}</span> ${item.unit}
+                                ${isLow ? '<span class="ml-2 text-[10px] bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-full font-bold"><i class="fa-solid fa-triangle-exclamation"></i> ใกล้หมด</span>' : ''}
+                            </div>
+                        </div>
+                        <button onclick="openCheckoutModal('${item.id}')" class="px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/40 hover:bg-emerald-600 hover:text-white text-emerald-700 dark:text-emerald-300 text-xs rounded-xl font-medium transition flex items-center gap-1 shrink-0">
+                            <i class="fa-solid fa-hand-holding-medical"></i> เบิก
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        window.openCheckoutModal = (id) => {
+            if (!currentUser) {
+                alert('⚠️ กรุณากรอกชื่อผู้เบิกที่ด้านบนก่อนทำการเบิกเวชภัณฑ์ครับ');
+                document.getElementById('global-user-input').focus();
+                return;
+            }
+
+            const item = inventory.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('checkout-item-id').value = item.id;
+            document.getElementById('modal-item-name').innerText = `รายการ: ${item.name} (คงเหลือ ${item.stock} ${item.unit})`;
+            document.getElementById('modal-user-name').innerText = currentUser;
+            document.getElementById('checkout-qty').value = 1;
+            document.getElementById('checkout-modal').classList.remove('hidden');
+        };
+
+        document.getElementById('cancel-checkout-btn').onclick = () => {
+            document.getElementById('checkout-modal').classList.add('hidden');
+        };
+
+        document.getElementById('confirm-checkout-btn').onclick = async () => {
+            const id = document.getElementById('checkout-item-id').value;
+            const qty = parseInt(document.getElementById('checkout-qty').value);
+
+            if (!qty || qty <= 0) return alert("กรุณาระบุจำนวนที่ถูกต้อง");
+
+            const item = inventory.find(i => i.id === id);
+            if (item.stock < qty) return alert("❌ สินค้าในคลังไม่พอให้เบิก!");
+
+            const newStock = item.stock - qty;
+            await updateItemStock(id, newStock, item.supplier);
+
+            const now = new Date();
+            const timestamp = now.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'medium' });
+            const ua = navigator.userAgent;
+            let deviceType = "Desktop / PC";
+            if (/android/i.test(ua)) deviceType = "Android Device";
+            else if (/iphone|ipad|ipod/i.test(ua)) deviceType = "iOS Device";
+
+            await logCheckout({
+                timestamp: timestamp,
+                user_name: currentUser,
+                item_name: item.name,
+                qty: qty,
+                device_summary: `${deviceType} (${navigator.platform})`
+            });
+
+            document.getElementById('checkout-modal').classList.add('hidden');
+            alert("✅ เบิกเวชภัณฑ์สำเร็จ!");
+            loadData();
+        };
+
+        document.getElementById('search-input').onkeyup = filterAndRender;
+        document.getElementById('category-filter').onchange = filterAndRender;
+
+        updateUIUser();
+        loadData();
+    </script>
+</body>
+</html>
