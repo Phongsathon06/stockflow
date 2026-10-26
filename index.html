@@ -3,229 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockFlow - แอดมิน รพ.สต.ศรีสุข</title>
+    <title>StockFlow - รพ.สต.ศรีสุข (เบิกพัสดุสำนักงาน)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <!-- Flatpickr (Date Picker CSS & JS) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/th.js"></script>
+    <style> body { font-family: 'Sarabun', sans-serif; } </style>
 
     <!-- Favicon / Logo บนแท็บเบราว์เซอร์ -->
     <link rel="icon" type="image/png" href="logo.png">
-
-    <!-- SheetJS (xlsx) Library -->
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <style> body { font-family: 'Sarabun', sans-serif; } </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
-    <!-- Passcode Overlay -->
-    <div id="passcode-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl dark:border dark:border-slate-700">
-            <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 text-lg">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            <h2 class="text-lg font-bold text-slate-800 dark:text-white mb-1">ยืนยันตัวตนแอดมิน</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">กรุณากรอกรหัสผ่านจากฐานข้อมูลเพื่อเข้าสู่ระบบ</p>
-            <input type="password" id="passcode-input" placeholder="กรอกรหัสผ่าน..." class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-lg tracking-widest mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
-            <button id="submit-passcode-btn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium text-sm transition shadow-md">เข้าสู่ระบบ</button>
-            <a href="index.html" class="block text-xs text-slate-400 mt-4 hover:underline">← กลับหน้าหลัก (เบิกพัสดุ)</a>
-        </div>
-    </div>
-
-    <!-- Admin Content -->
-    <header class="bg-slate-900 text-white shadow-md">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen pb-12 transition-colors duration-200">
+    <header class="bg-emerald-700 dark:bg-emerald-900 text-white shadow-md transition-colors duration-200">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
             <div>
-                <h1 class="text-lg font-bold"><i class="fa-solid fa-sliders mr-2"></i>ระบบจัดการคลังพัสดุ - รพ.สต.ศรีสุข</h1>
+                <h1 class="text-xl font-bold"><i class="fa-solid fa-boxes-stacked mr-2"></i>ระบบเบิกพัสดุสำนักงาน รพ.สต.ศรีสุข</h1>
+                <p class="text-xs text-emerald-100">StockFlow - ระบบจัดการคลังพัสดุอัจฉริยะ</p>
             </div>
             <div class="flex items-center gap-2">
-                <button id="theme-toggle-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1">
+                <button id="theme-toggle-btn" class="bg-emerald-800 hover:bg-emerald-900 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1">
                     <i id="theme-icon" class="fa-solid fa-moon"></i> <span id="theme-text">โหมดมืด</span>
                 </button>
-                <button id="open-add-modal-btn" class="bg-emerald-600 hover:bg-emerald-700 text-xs px-3 py-2 rounded-lg font-medium transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มพัสดุใหม่</button>
-                <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg font-medium transition">ออกสู่หน้าเว็บ</a>
+                <a href="admin.html" class="bg-emerald-800 hover:bg-emerald-900 text-xs px-3 py-2 rounded-lg font-medium transition">
+                    <i class="fa-solid fa-lock mr-1"></i> แอดมิน
+                </a>
             </div>
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 mt-6">
-        <!-- Tabs -->
-        <div class="flex flex-wrap gap-2 mb-4 border-b border-slate-200 dark:border-slate-800 pb-2">
-            <button id="tab-inventory-btn" class="px-4 py-2 bg-emerald-600 text-white text-xs rounded-xl font-medium shadow-sm transition">จัดการคลังพัสดุ</button>
-            <button id="tab-restock-logs-btn" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-xl font-medium transition">ประวัติการเติมสต็อก</button>
-            <button id="tab-logs-btn" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-xl font-medium transition">ประวัติการเบิก</button>
-        </div>
-
-        <!-- 1. Inventory Tab Content -->
-        <div id="tab-inventory-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-200">
-            <div class="p-4 border-b border-slate-100 dark:border-slate-700">
-                <h2 class="font-bold text-sm text-slate-700 dark:text-slate-200">รายการพัสดุสำนักงานทั้งหมด</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 dark:bg-slate-900/50 text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            <th class="px-4 py-3">รายการพัสดุ</th>
-                            <th class="px-4 py-3">คงเหลือ</th>
-                            <th class="px-4 py-3">แหล่งที่มา/ผู้จำหน่าย</th>
-                            <th class="px-4 py-3 text-right">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-items-table" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- 2. Restock Logs Tab Content -->
-        <div id="tab-restock-logs-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden hidden transition-colors duration-200">
-            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                <h2 class="font-bold text-sm text-slate-700 dark:text-slate-200"><i class="fa-solid fa-clock-rotate-left mr-1 text-emerald-600"></i> ประวัติการเติมพัสดุเข้าคลังย้อนหลัง</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 dark:bg-slate-900/50 text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            <th class="px-4 py-3">วันที่รับพัสดุ (วัน เดือน ปี ไทย)</th>
-                            <th class="px-4 py-3">รายการพัสดุ</th>
-                            <th class="px-4 py-3">จำนวนที่เพิ่ม</th>
-                            <th class="px-4 py-3">ผู้จำหน่าย / แหล่งที่มา</th>
-                        </tr>
-                    </thead>
-                    <tbody id="restock-logs-table" class="divide-y divide-slate-100 dark:divide-slate-700 text-xs"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- 3. Logs Tab Content -->
-        <div id="tab-logs-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden hidden transition-colors duration-200">
-            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
-                <div class="flex flex-col sm:flex-row items-center gap-2 flex-1">
-                    <div class="relative w-full sm:w-64">
-                        <i class="fa-solid fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
-                        <input type="text" id="log-search-input" placeholder="ค้นหาชื่อผู้เบิก หรือรายการ..." class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
-                    </div>
-                    <div class="flex items-center gap-2 w-full sm:w-auto text-xs text-slate-500 dark:text-slate-400">
-                        <span>ช่วงวันที่:</span>
-                        <input type="text" id="log-date-range" placeholder="เลือกช่วงวัน (จาก - ถึง)..." class="w-full sm:w-56 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white cursor-pointer">
-                        <button id="clear-date-btn" title="ล้างค่าวันที่" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition text-xs font-medium shrink-0 flex items-center gap-1">
-                            <i class="fa-solid fa-rotate-left"></i> แสดงทั้งหมด
-                        </button>
-                    </div>
+    <main class="max-w-4xl mx-auto px-4 mt-6">
+        <div class="bg-emerald-50 dark:bg-slate-800 border border-emerald-200 dark:border-slate-700 rounded-2xl p-4 mb-4 flex flex-col sm:flex-row justify-between items-center gap-3 transition-colors duration-200">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="w-10 h-10 bg-emerald-600 text-white rounded-full flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-user text-lg"></i>
                 </div>
-
-                <button id="export-excel-btn" class="w-full lg:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-xl font-medium transition flex items-center justify-center gap-2 shadow-sm shrink-0">
-                    <i class="fa-solid fa-file-excel"></i> ส่งออกเป็น Excel (.xlsx) [3 ชีท]
+                <div class="w-full sm:w-auto">
+                    <div class="text-xs text-emerald-800 dark:text-emerald-400 font-medium">ผู้ใช้งานขณะนี้ / ผู้เบิก:</div>
+                    <div id="user-display" class="font-bold text-slate-800 dark:text-slate-100 text-base">ยังไม่ได้ระบุชื่อ</div>
+                </div>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+                <input type="text" id="global-user-input" placeholder="กรอกชื่อ-นามสกุล / ตำแหน่ง..." class="px-3 py-2 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-64 dark:text-white">
+                <button id="save-user-btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-xl font-medium transition shrink-0">
+                    บันทึกชื่อ
                 </button>
             </div>
+        </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 dark:bg-slate-900/50 text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            <th class="px-4 py-3">เวลาที่เบิก (วัน เดือน ปี ไทย)</th>
-                            <th class="px-4 py-3">ผู้เบิก</th>
-                            <th class="px-4 py-3">รายการพัสดุ</th>
-                            <th class="px-4 py-3">จำนวน</th>
-                            <th class="px-4 py-3">รุ่นอุปกรณ์ / เบราว์เซอร์</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logs-table" class="divide-y divide-slate-100 dark:divide-slate-700 text-xs"></tbody>
-                </table>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 mb-6 border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row gap-3 transition-colors duration-200">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400"></i>
+                <input type="text" id="search-input" placeholder="ค้นหาชื่อพัสดุสำนักงาน..." class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
             </div>
+        </div>
+
+        <div id="items-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="text-center py-10 text-slate-400 col-span-2">กำลังโหลดข้อมูลพัสดุสำนักงาน...</div>
         </div>
     </main>
 
-    <!-- Restock Modal -->
-    <div id="restock-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div id="checkout-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl dark:border dark:border-slate-700">
-            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">เติมสต็อกพัสดุ</h3>
-            <input type="hidden" id="restock-id">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">ยืนยันการเบิกพัสดุสำนักงาน</h3>
+            <p id="modal-item-name" class="text-sm text-emerald-600 dark:text-emerald-400 font-medium mb-4">-</p>
+            
             <div class="space-y-4">
-                <div>
-                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">รายการ</label>
-                    <input type="text" id="restock-name" disabled class="w-full p-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-slate-400">
+                <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span class="text-xs text-slate-500 dark:text-slate-400">ชื่อผู้เบิก:</span>
+                    <span id="modal-user-name" class="font-bold text-slate-800 dark:text-white ml-2">-</span>
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">วันที่รับ/เติมเข้า (เลือกเฉพาะวันที่)</label>
-                    <input type="text" id="restock-date" placeholder="เลือกวันที่เติมสต็อก..." class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white cursor-pointer">
+                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">จำนวนที่ต้องการเบิก</label>
+                    <input type="number" id="checkout-qty" value="1" min="1" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
                 </div>
-                <div>
-                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">จำนวนที่ต้องการเพิ่ม (+)</label>
-                    <input type="number" id="restock-add-qty" value="10" min="1" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">ผู้จำหน่าย / แหล่งที่มา</label>
-                    <input type="text" id="restock-supplier" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
-                </div>
+                <input type="hidden" id="checkout-item-id">
             </div>
+
             <div class="flex space-x-2 mt-6">
-                <button id="close-restock-btn" class="flex-1 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-xs">ยกเลิก</button>
-                <button id="save-restock-btn" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-medium text-xs shadow-md">บันทึกการเติม</button>
+                <button id="cancel-checkout-btn" class="flex-1 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-sm transition">ยกเลิก</button>
+                <button id="confirm-checkout-btn" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium text-sm shadow-md transition">ยืนยันการเบิก</button>
             </div>
         </div>
     </div>
 
-    <!-- Add Item Modal -->
-    <div id="add-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl dark:border dark:border-slate-700">
-            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">เพิ่มพัสดุใหม่</h3>
-            <div class="space-y-3">
-                <input type="text" id="new-name" placeholder="ชื่อพัสดุ (เช่น ปากกา, กรรไกร, กระดาษ...)" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
-
-                <div>
-                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">วันที่รับพัสดุเข้า (เลือกเฉพาะวันที่)</label>
-                    <input type="text" id="new-item-date" placeholder="เลือกวันที่รับพัสดุ..." class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white cursor-pointer">
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="number" id="new-stock" placeholder="จำนวนเริ่มต้น" class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
-                    
-                    <div>
-                        <select id="new-unit-select" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mb-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
-                            <option value="">-- เลือกหน่วยนับ --</option>
-                            <option value="ด้าม">ด้าม</option>
-                            <option value="อัน">อัน</option>
-                            <option value="รีม">รีม</option>
-                            <option value="เล่ม">เล่ม</option>
-                            <option value="ชิ้น">ชิ้น</option>
-                            <option value="ม้วน">ม้วน</option>
-                            <option value="แฟ้ม">แฟ้ม</option>
-                            <option value="กล่อง">กล่อง</option>
-                            <option value="แพ็ค">แพ็ค</option>
-                            <option value="ซอง">ซอง</option>
-                        </select>
-                        <input type="text" id="new-unit-input" placeholder="หรือพิมพ์หน่วย..." class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
-                    </div>
-                </div>
-
-                <input type="number" id="new-min" placeholder="แจ้งเตือนขั้นต่ำ (ค่าเริ่มต้น: 5)" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
-                <input type="text" id="new-supplier" placeholder="ผู้จำหน่าย / แหล่งที่มา" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
-            </div>
-            <div class="flex space-x-2 mt-6">
-                <button id="close-add-btn" class="flex-1 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-xs">ยกเลิก</button>
-                <button id="save-add-btn" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-medium text-xs shadow-md">บันทึก</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Script Integration -->
     <script type="module">
-        import { getItems, updateItemStock, addNewItem, deleteItem, getLogs, getRestockLogs, supabase } from './supabase.js';
+        import { getItems, updateItemStock, logCheckout, supabase } from './supabase.js';
 
         let inventory = [];
-        let logs = [];
-        let restockLogs = [];
-        let filteredLogsCache = [];
-        let datePickerInstance = null;
-        let restockDatePicker = null;
-        let addItemDatePicker = null;
+        let currentUser = localStorage.getItem('stockflow_user') || '';
 
         const htmlElement = document.documentElement;
         const themeToggleBtn = document.getElementById('theme-toggle-btn');
@@ -259,465 +126,136 @@
             applyTheme(isDark);
         };
 
-        async function handleAdminLogin() {
-            const inputPass = document.getElementById('passcode-input').value.trim();
-            
-            try {
-                const { data, error } = await supabase
-                    .from('settings')
-                    .select('value')
-                    .eq('key', 'admin_passcode');
-
-                if (error || !data || data.length === 0) {
-                    alert("❌ ไม่สามารถเชื่อมต่อกับฐานข้อมูลเพื่อตรวจสอบรหัสผ่านได้");
-                    return;
-                }
-
-                if (inputPass === data[0].value) {
-                    document.getElementById('passcode-overlay').classList.add('hidden');
-                    loadAdminData();
-                } else {
-                    alert("❌ รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง!");
-                }
-            } catch (err) {
-                alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อกับฐานข้อมูล");
-            }
-        }
-
-        document.getElementById('submit-passcode-btn').onclick = handleAdminLogin;
-        document.getElementById('passcode-input').onkeypress = (e) => {
-            if (e.key === 'Enter') handleAdminLogin();
-        };
-
-        const thaiMonths = [
-            "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
-            "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
-        ];
-
-        document.addEventListener("DOMContentLoaded", () => {
-            datePickerInstance = flatpickr("#log-date-range", {
-                mode: "range",
-                dateFormat: "Y-m-d",
-                locale: "th",
-                formatDate: (date) => {
-                    const day = date.getDate();
-                    const month = thaiMonths[date.getMonth()];
-                    const year = date.getFullYear() + 543;
-                    return `${day} ${month} ${year}`;
-                },
-                onChange: function() {
-                    filterAndRenderLogs();
-                }
-            });
-
-            const dateOnlyConfig = {
-                dateFormat: "Y-m-d",
-                locale: "th",
-                defaultDate: new Date(),
-                formatDate: (date) => {
-                    const day = date.getDate();
-                    const month = thaiMonths[date.getMonth()];
-                    const year = date.getFullYear() + 543;
-                    return `${day} ${month} ${year}`;
-                }
-            };
-
-            restockDatePicker = flatpickr("#restock-date", dateOnlyConfig);
-            addItemDatePicker = flatpickr("#new-item-date", dateOnlyConfig);
-        });
-
-        async function loadAdminData() {
-            inventory = await getItems();
-            logs = await getLogs();
-            restockLogs = await getRestockLogs();
-            renderAdminTable();
-            filterAndRenderLogs();
-            renderRestockLogsTable();
-        }
-
-        document.getElementById('new-unit-select').onchange = (e) => {
-            if (e.target.value) document.getElementById('new-unit-input').value = e.target.value;
-        };
-
-        function renderAdminTable() {
-            const tbody = document.getElementById('admin-items-table');
-            tbody.innerHTML = "";
-
-            if (inventory.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">ไม่พบรายการพัสดุในระบบ</td></tr>`;
-                return;
-            }
-
-            inventory.forEach(item => {
-                const isLow = item.stock <= item.min_stock;
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 ${isLow ? 'bg-rose-50/40 dark:bg-rose-950/20' : ''}">
-                        <td class="px-4 py-3"><div class="font-bold text-slate-800 dark:text-white">${item.name}</div><div class="text-[10px] text-slate-400 font-mono">${item.id}</div></td>
-                        <td class="px-4 py-3">
-                            <span class="font-bold ${isLow ? 'text-rose-600 dark:text-rose-400 text-base' : 'text-emerald-600 dark:text-emerald-400'}">${item.stock}</span> 
-                            <span class="text-xs text-slate-500 dark:text-slate-400">${item.unit}</span>
-                            ${isLow ? '<span class="ml-2 text-[10px] bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-full font-bold">ใกล้หมด</span>' : ''}
-                        </td>
-                        <td class="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">${item.supplier || '-'}</td>
-                        <td class="px-4 py-3 text-right space-x-1">
-                            <button onclick="openRestockModal('${item.id}')" class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs rounded-lg font-medium">+เติมสต็อก</button>
-                            <button onclick="removeItem('${item.id}')" class="px-2 py-1 text-rose-500 text-xs hover:bg-rose-50 dark:hover:bg-rose-900/40 rounded-lg"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function formatThaiDateOnly(dateInput) {
-            if (!dateInput) return '-';
-            let d = new Date(dateInput);
-            if (isNaN(d.getTime())) return dateInput; 
-
-            const day = d.getDate();
-            const month = thaiMonths[d.getMonth()];
-            const year = d.getFullYear() + 543;
-
-            return `${day} ${month} ${year}`;
-        }
-
-        function formatThaiDateTime(dateInput) {
-            if (!dateInput) return '-';
-            let d = new Date(dateInput);
-            if (isNaN(d.getTime())) return dateInput; 
-
-            const day = d.getDate();
-            const month = thaiMonths[d.getMonth()];
-            const year = d.getFullYear() + 543;
-            const time = d.toTimeString().split(' ')[0];
-
-            return `${day} ${month} ${year} เวลา ${time}`;
-        }
-
-        function parseThaiDateToISO(dateString) {
-            if (!dateString) return new Date().toISOString();
-            if (/^\d{4}-\d{2}-\d{2}/.test(dateString)) {
-                return new Date(dateString).toISOString();
-            }
-            const parts = dateString.split(' ');
-            if (parts.length >= 3) {
-                const day = parseInt(parts[0]);
-                const month = thaiMonths.indexOf(parts[1]);
-                let year = parseInt(parts[2]);
-                if (year > 2500) year -= 543;
-
-                if (!isNaN(day) && month !== -1 && !isNaN(year)) {
-                    const d = new Date(year, month, day, 12, 0, 0);
-                    return d.toISOString();
-                }
-            }
-            return new Date().toISOString();
-        }
-
-        function filterAndRenderLogs() {
-            const keyword = document.getElementById('log-search-input').value.toLowerCase().trim();
-            let startDate = null;
-            let endDate = null;
-
-            if (datePickerInstance && datePickerInstance.selectedDates.length > 0) {
-                const selected = datePickerInstance.selectedDates;
-                startDate = new Date(selected[0]);
-                startDate.setHours(0, 0, 0, 0);
-
-                if (selected.length > 1) {
-                    endDate = new Date(selected[1]);
-                    endDate.setHours(23, 59, 59, 999);
-                } else {
-                    endDate = new Date(selected[0]);
-                    endDate.setHours(23, 59, 59, 999);
-                }
-            }
-
-            filteredLogsCache = logs.filter(log => {
-                const matchKeyword = !keyword || 
-                    log.user_name.toLowerCase().includes(keyword) || 
-                    log.item_name.toLowerCase().includes(keyword);
-
-                let matchDate = true;
-                if (startDate) {
-                    let logDate = null;
-                    if (log.created_at) {
-                        logDate = new Date(log.created_at);
-                    } else if (log.timestamp) {
-                        const cleanDatePart = log.timestamp.split(' ')[0];
-                        if (cleanDatePart.includes('/')) {
-                            const parts = cleanDatePart.split('/');
-                            if (parts.length === 3) {
-                                let year = parseInt(parts[2]);
-                                if (year > 2500) year -= 543;
-                                logDate = new Date(year, parseInt(parts[1]) - 1, parseInt(parts[0]));
-                            }
-                        } else {
-                            logDate = new Date(cleanDatePart);
-                        }
-                    }
-
-                    if (logDate && !isNaN(logDate.getTime())) {
-                        if (logDate < startDate || logDate > endDate) {
-                            matchDate = false;
-                        }
-                    }
-                }
-
-                return matchKeyword && matchDate;
-            });
-
-            renderLogsTable(filteredLogsCache);
-        }
-
-        function renderLogsTable(dataLogs) {
-            const tbody = document.getElementById('logs-table');
-            tbody.innerHTML = "";
-
-            if (dataLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">ไม่พบประวัติการเบิกจ่ายตามเงื่อนไขที่ค้นหา</td></tr>`;
-                return;
-            }
-
-            dataLogs.forEach(log => {
-                const thaiFormattedDate = formatThaiDateTime(log.created_at || log.timestamp);
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 text-xs">
-                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400">${thaiFormattedDate}</td>
-                        <td class="px-4 py-3 font-bold text-slate-800 dark:text-white">${log.user_name}</td>
-                        <td class="px-4 py-3 text-emerald-600 dark:text-emerald-400 font-medium">${log.item_name}</td>
-                        <td class="px-4 py-3 font-bold dark:text-slate-200">${log.qty}</td>
-                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400">${log.device_summary || '-'}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        function renderRestockLogsTable() {
-            const tbody = document.getElementById('restock-logs-table');
-            tbody.innerHTML = "";
-
-            if (restockLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">ยังไม่มีประวัติการเติมสต็อกในระบบ</td></tr>`;
-                return;
-            }
-
-            restockLogs.forEach(log => {
-                const thaiDate = formatThaiDateOnly(log.timestamp || log.created_at);
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 text-xs">
-                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400">${thaiDate}</td>
-                        <td class="px-4 py-3 font-bold text-emerald-600 dark:text-emerald-400">${log.item_name}</td>
-                        <td class="px-4 py-3 font-bold text-slate-800 dark:text-white">+${log.qty}</td>
-                        <td class="px-4 py-3 text-slate-600 dark:text-slate-300">${log.supplier || '-'}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        document.getElementById('log-search-input').onkeyup = filterAndRenderLogs;
-        document.getElementById('log-search-input').oninput = filterAndRenderLogs;
-
-        document.getElementById('clear-date-btn').onclick = () => {
-            if (datePickerInstance) datePickerInstance.clear();
-            document.getElementById('log-search-input').value = '';
-            filterAndRenderLogs();
-        };
-
-        document.getElementById('export-excel-btn').onclick = () => {
-            if (!inventory.length && !filteredLogsCache.length && !restockLogs.length) {
-                alert("ไม่มีข้อมูลสำหรับการส่งออก");
-                return;
-            }
-
-            const wb = XLSX.utils.book_new();
-
-            const inventoryData = inventory.map(item => ({
-                "รหัสพัสดุ (SKU)": item.id,
-                "ชื่อพัสดุสำนักงาน": item.name,
-                "คงเหลือ": item.stock,
-                "หน่วยนับ": item.unit || 'ชิ้น',
-                "ขั้นต่ำเตือน": item.min_stock,
-                "ผู้จำหน่าย/แหล่งที่มา": item.supplier || '-'
-            }));
-            const wsInventory = XLSX.utils.json_to_sheet(inventoryData);
-            XLSX.utils.book_append_sheet(wb, wsInventory, "คลังพัสดุสำนักงาน");
-
-            const restockData = restockLogs.map(log => ({
-                "วันที่รับพัสดุ": formatThaiDateOnly(log.timestamp || log.created_at),
-                "รายการพัสดุ": log.item_name || '',
-                "จำนวนที่เพิ่ม": log.qty || 0,
-                "ผู้จำหน่าย / แหล่งที่มา": log.supplier || '-'
-            }));
-            const wsRestock = XLSX.utils.json_to_sheet(restockData);
-            XLSX.utils.book_append_sheet(wb, wsRestock, "ประวัติการเติมสต็อก");
-
-            const logsData = filteredLogsCache.map(log => ({
-                "เวลาที่เบิก": formatThaiDateTime(log.created_at || log.timestamp),
-                "ผู้เบิก": log.user_name || '',
-                "รายการพัสดุ": log.item_name || '',
-                "จำนวน": log.qty || 0,
-                "รุ่นอุปกรณ์ / เบราว์เซอร์": log.device_summary || '-'
-            }));
-            const wsLogs = XLSX.utils.json_to_sheet(logsData);
-            XLSX.utils.book_append_sheet(wb, wsLogs, "ประวัติการเบิก-จ่าย");
-
-            const fileName = `StockFlow_Office_Report_${new Date().toISOString().slice(0,10)}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-        };
-
-        window.openRestockModal = (id) => {
-            const item = inventory.find(i => i.id === id);
-            document.getElementById('restock-id').value = item.id;
-            document.getElementById('restock-name').value = item.name;
-            document.getElementById('restock-supplier').value = item.supplier || '';
-            if (restockDatePicker) restockDatePicker.setDate(new Date());
-            document.getElementById('restock-modal').classList.remove('hidden');
-        };
-
-        document.getElementById('save-restock-btn').onclick = async () => {
-            const id = document.getElementById('restock-id').value;
-            const addQty = parseInt(document.getElementById('restock-add-qty').value) || 0;
-            const supplier = document.getElementById('restock-supplier').value;
-            const selectedDateVal = document.getElementById('restock-date').value;
-
-            if (addQty <= 0) return alert("กรุณาระบุจำนวนที่ต้องการเพิ่มให้ถูกต้อง");
-
-            const item = inventory.find(i => i.id === id);
-            const newStock = item.stock + addQty;
-
-            await updateItemStock(id, newStock, supplier);
-
-            const timestampStr = parseThaiDateToISO(selectedDateVal);
-            
-            await supabase.from('restock_logs').insert([{
-                timestamp: timestampStr,
-                created_at: timestampStr,
-                item_name: item.name,
-                qty: addQty,
-                supplier: supplier || '-'
-            }]);
-
-            document.getElementById('restock-modal').classList.add('hidden');
-            alert("✅ เติมสต็อกพัสดุและบันทึกประวัติเรียบร้อยแล้ว!");
-            loadAdminData();
-        };
-
-        document.getElementById('open-add-modal-btn').onclick = () => {
-            document.getElementById('new-name').value = '';
-            document.getElementById('new-stock').value = '';
-            document.getElementById('new-unit-input').value = '';
-            document.getElementById('new-min').value = '';
-            document.getElementById('new-supplier').value = '';
-            if (addItemDatePicker) addItemDatePicker.setDate(new Date());
-            document.getElementById('add-modal').classList.remove('hidden');
-        };
-        document.getElementById('close-add-btn').onclick = () => document.getElementById('add-modal').classList.add('hidden');
-        document.getElementById('close-restock-btn').onclick = () => document.getElementById('restock-modal').classList.add('hidden');
-
-        document.getElementById('save-add-btn').onclick = async () => {
-            const name = document.getElementById('new-name').value.trim();
-            const unit = document.getElementById('new-unit-input').value.trim();
-            const initialStock = parseInt(document.getElementById('new-stock').value) || 0;
-            const supplier = document.getElementById('new-supplier').value.trim();
-            const selectedDateVal = document.getElementById('new-item-date').value;
-
-            if (!name) return alert("กรุณากรอกชื่อพัสดุ");
-
-            // 🔍 ตรวจสอบว่ามีรายการพัสดุชื่อซ้ำกันในคลังหรือยัง (ไม่สนตัวพิมพ์เล็ก-ใหญ่)
-            const existingItem = inventory.find(i => i.name.trim().toLowerCase() === name.toLowerCase());
-
-            if (existingItem) {
-                // ถ้ามีชื่อซ้ำอยู่แล้ว ให้เอาน้ำจำนวนไปบวกเพิ่มเข้ากับของเดิม
-                const newStock = existingItem.stock + initialStock;
-                await updateItemStock(existingItem.id, newStock, supplier || existingItem.supplier);
-
-                if (initialStock > 0) {
-                    const timestampStr = parseThaiDateToISO(selectedDateVal);
-                    await supabase.from('restock_logs').insert([{
-                        timestamp: timestampStr,
-                        created_at: timestampStr,
-                        item_name: existingItem.name,
-                        qty: initialStock,
-                        supplier: supplier || existingItem.supplier || '-'
-                    }]);
-                }
-
-                document.getElementById('add-modal').classList.add('hidden');
-                alert(`✅ พบพัสดุชื่อ "${existingItem.name}" อยู่ในระบบแล้ว ระบบได้ทำการบวกเพิ่มจำนวน ${initialStock} เข้าไปในรายการเดิมให้เรียบร้อย!`);
+        function updateUIUser() {
+            const display = document.getElementById('user-display');
+            const input = document.getElementById('global-user-input');
+            if (currentUser) {
+                display.innerText = currentUser;
+                input.value = currentUser;
             } else {
-                // ถ้ายังไม่มี ให้สร้างรายการใหม่ตามปกติ
-                const newItem = {
-                    id: 'SKU-' + String(inventory.length + 1).padStart(3, '0'),
-                    name: name,
-                    category: 'วัสดุสำนักงาน',
-                    unit: unit || 'ชิ้น',
-                    stock: initialStock,
-                    min_stock: parseInt(document.getElementById('new-min').value) || 5,
-                    supplier: supplier
-                };
+                display.innerText = 'ยังไม่ได้ระบุชื่อ';
+                input.value = '';
+            }
+        }
 
-                await addNewItem(newItem);
+        document.getElementById('save-user-btn').onclick = () => {
+            const inputName = document.getElementById('global-user-input').value.trim();
+            if (!inputName) {
+                alert('กรุณากรอกชื่อ-นามสกุลก่อนบันทึก');
+                return;
+            }
+            currentUser = inputName;
+            localStorage.setItem('stockflow_user', currentUser);
+            updateUIUser();
+            alert('✅ บันทึกชื่อผู้เบิกเรียบร้อยแล้ว');
+        };
 
-                if (initialStock > 0) {
-                    const timestampStr = parseThaiDateToISO(selectedDateVal);
-                    await supabase.from('restock_logs').insert([{
-                        timestamp: timestampStr,
-                        created_at: timestampStr,
-                        item_name: name,
-                        qty: initialStock,
-                        supplier: supplier || '-'
-                    }]);
-                }
+        async function loadData() {
+            inventory = await getItems();
+            filterAndRender();
+        }
 
-                document.getElementById('add-modal').classList.add('hidden');
-                alert("✅ เพิ่มพัสดุใหม่และบันทึกประวัติสำเร็จ!");
+        function filterAndRender() {
+            const keyword = document.getElementById('search-input').value.toLowerCase().trim();
+            const filtered = inventory.filter(item => {
+                return item.name.toLowerCase().includes(keyword) || (item.supplier && item.supplier.toLowerCase().includes(keyword));
+            });
+            renderItems(filtered);
+        }
+
+        function renderItems(items) {
+            const container = document.getElementById('items-container');
+            container.innerHTML = "";
+
+            if (items.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-slate-400 col-span-2">ไม่พบรายการพัสดุในระบบ</div>`;
+                return;
             }
 
-            loadAdminData();
-        };
+            items.forEach(item => {
+                const isLow = item.stock <= item.min_stock;
+                container.innerHTML += `
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border ${isLow ? 'border-rose-300 dark:border-rose-900 bg-rose-50/30 dark:bg-rose-950/20' : 'border-slate-100 dark:border-slate-700'} flex justify-between items-center transition-colors duration-200">
+                        <div>
+                            <h3 class="font-bold text-slate-800 dark:text-white mt-1 text-base">${item.name}</h3>
+                            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                คงเหลือ: <span class="font-bold ${isLow ? 'text-rose-600 dark:text-rose-400 text-base' : 'text-emerald-600 dark:text-emerald-400 text-sm'}">${item.stock}</span> ${item.unit}
+                                ${isLow ? '<span class="ml-2 text-[10px] bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-full font-bold"><i class="fa-solid fa-triangle-exclamation"></i> ใกล้หมด</span>' : ''}
+                            </div>
+                        </div>
+                        <button onclick="openCheckoutModal('${item.id}')" class="px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/40 hover:bg-emerald-600 hover:text-white text-emerald-700 dark:text-emerald-300 text-xs rounded-xl font-medium transition flex items-center gap-1 shrink-0">
+                            <i class="fa-solid fa-hand-holding-medical"></i> เบิก
+                        </button>
+                    </div>
+                `;
+            });
+        }
 
-        window.removeItem = async (id) => {
-            if (confirm("ต้องการลบรายการนี้ออกจากระบบหรือไม่?")) {
-                await deleteItem(id);
-                loadAdminData();
+        window.openCheckoutModal = (id) => {
+            if (!currentUser) {
+                alert('⚠️ กรุณากรอกชื่อผู้เบิกที่ด้านบนก่อนทำการเบิกพัสดุครับ');
+                document.getElementById('global-user-input').focus();
+                return;
             }
+
+            const item = inventory.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('checkout-item-id').value = item.id;
+            document.getElementById('modal-item-name').innerText = `รายการ: ${item.name} (คงเหลือ ${item.stock} ${item.unit})`;
+            document.getElementById('modal-user-name').innerText = currentUser;
+            document.getElementById('checkout-qty').value = 1;
+            document.getElementById('checkout-modal').classList.remove('hidden');
         };
 
-        document.getElementById('tab-inventory-btn').onclick = () => {
-            document.getElementById('tab-inventory-content').classList.remove('hidden');
-            document.getElementById('tab-restock-logs-content').classList.add('hidden');
-            document.getElementById('tab-logs-content').classList.add('hidden');
-
-            document.getElementById('tab-inventory-btn').className = "px-4 py-2 bg-emerald-600 text-white text-xs rounded-xl font-medium shadow-sm transition";
-            document.getElementById('tab-restock-logs-btn').className = "px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-xl font-medium transition";
-            document.getElementById('tab-logs-btn').className = "px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-xl font-medium transition";
+        document.getElementById('cancel-checkout-btn').onclick = () => {
+            document.getElementById('checkout-modal').classList.add('hidden');
         };
 
-        document.getElementById('tab-restock-logs-btn').onclick = () => {
-            document.getElementById('tab-inventory-content').classList.add('hidden');
-            document.getElementById('tab-restock-logs-content').classList.remove('hidden');
-            document.getElementById('tab-logs-content').classList.add('hidden');
+        document.getElementById('confirm-checkout-btn').onclick = async () => {
+            const id = document.getElementById('checkout-item-id').value;
+            const qty = parseInt(document.getElementById('checkout-qty').value);
 
-            document.getElementById('tab-restock-logs-btn').className = "px-4 py-2 bg-emerald-600 text-white text-xs rounded-xl font-medium transition";
-            document.getElementById('tab-inventory-btn').className = "px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-xl font-medium transition";
-            document.getElementById('tab-logs-btn').className = "px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-xl font-medium transition";
+            if (!qty || qty <= 0) return alert("กรุณาระบุจำนวนที่ถูกต้อง");
+
+            const item = inventory.find(i => i.id === id);
+            if (item.stock < qty) return alert("❌ พัสดุในคลังไม่พอให้เบิก!");
+
+            const newStock = item.stock - qty;
+            await updateItemStock(id, newStock, item.supplier);
+
+            const now = new Date();
+            const timestamp = now.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'medium' });
+            const ua = navigator.userAgent;
+            let deviceType = "Desktop / PC";
+            if (/android/i.test(ua)) deviceType = "Android Device";
+            else if (/iphone|ipad|ipod/i.test(ua)) deviceType = "iOS Device";
+
+            await logCheckout({
+                timestamp: timestamp,
+                user_name: currentUser,
+                item_name: item.name,
+                qty: qty,
+                device_summary: `${deviceType} (${navigator.platform})`
+            });
+
+            document.getElementById('checkout-modal').classList.add('hidden');
+            alert("✅ เบิกพัสดุสำนักงานสำเร็จ!");
         };
 
-        document.getElementById('tab-logs-btn').onclick = () => {
-            document.getElementById('tab-inventory-content').classList.add('hidden');
-            document.getElementById('tab-restock-logs-content').classList.add('hidden');
-            document.getElementById('tab-logs-content').classList.remove('hidden');
+        document.getElementById('search-input').onkeyup = filterAndRender;
+        document.getElementById('search-input').oninput = filterAndRender;
 
-            document.getElementById('tab-logs-btn').className = "px-4 py-2 bg-emerald-600 text-white text-xs rounded-xl font-medium shadow-sm transition";
-            document.getElementById('tab-inventory-btn').className = "px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-xl font-medium transition";
-            document.getElementById('tab-restock-logs-btn').className = "px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-xl font-medium transition";
-        };
-
-        supabase.channel('admin-realtime')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, () => loadAdminData())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'logs' }, () => loadAdminData())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'restock_logs' }, () => loadAdminData())
+        // เปิด Realtime Listener ฟังการเปลี่ยนแปลงตาราง items
+        supabase
+            .channel('public:items')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, payload => {
+                loadData();
+            })
             .subscribe();
+
+        updateUIUser();
+        loadData();
     </script>
 </body>
 </html>
