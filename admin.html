@@ -97,6 +97,7 @@
                             <th class="px-4 py-3">รายการพัสดุ</th>
                             <th class="px-4 py-3">จำนวนที่เพิ่ม</th>
                             <th class="px-4 py-3">ผู้จำหน่าย / แหล่งที่มา</th>
+                            <th class="px-4 py-3 text-right">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody id="restock-logs-table" class="divide-y divide-slate-100 dark:divide-slate-700 text-xs"></tbody>
@@ -135,6 +136,7 @@
                             <th class="px-4 py-3">รายการพัสดุ</th>
                             <th class="px-4 py-3">จำนวน</th>
                             <th class="px-4 py-3">รุ่นอุปกรณ์ / เบราว์เซอร์</th>
+                            <th class="px-4 py-3 text-right">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody id="logs-table" class="divide-y divide-slate-100 dark:divide-slate-700 text-xs"></tbody>
@@ -142,6 +144,58 @@
             </div>
         </div>
     </main>
+
+    <!-- Modal: Edit Restock Log -->
+    <div id="edit-restock-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl dark:border dark:border-slate-700">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">แก้ไขประวัติการเติมสต็อก</h3>
+            <input type="hidden" id="edit-restock-id">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">รายการพัสดุ</label>
+                    <input type="text" id="edit-restock-item-name" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">จำนวนที่เพิ่ม (+)</label>
+                    <input type="number" id="edit-restock-qty" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">ผู้จำหน่าย / แหล่งที่มา</label>
+                    <input type="text" id="edit-restock-supplier" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+                </div>
+            </div>
+            <div class="flex space-x-2 mt-6">
+                <button id="close-edit-restock-btn" class="flex-1 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-xs">ยกเลิก</button>
+                <button id="save-edit-restock-btn" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-medium text-xs shadow-md">บันทึกการแก้ไข</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Checkout Log -->
+    <div id="edit-log-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl dark:border dark:border-slate-700">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">แก้ไขประวัติการเบิก</h3>
+            <input type="hidden" id="edit-log-id">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">ชื่อผู้เบิก</label>
+                    <input type="text" id="edit-log-user" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">รายการพัสดุ</label>
+                    <input type="text" id="edit-log-item-name" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">จำนวนที่เบิก</label>
+                    <input type="number" id="edit-log-qty" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+                </div>
+            </div>
+            <div class="flex space-x-2 mt-6">
+                <button id="close-edit-log-btn" class="flex-1 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-xs">ยกเลิก</button>
+                <button id="save-edit-log-btn" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-medium text-xs shadow-md">บันทึกการแก้ไข</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Restock Modal -->
     <div id="restock-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
@@ -475,7 +529,7 @@
             tbody.innerHTML = "";
 
             if (dataLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">ไม่พบประวัติการเบิกจ่ายตามเงื่อนไขที่ค้นหา</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">ไม่พบประวัติการเบิกจ่ายตามเงื่อนไขที่ค้นหา</td></tr>`;
                 return;
             }
 
@@ -488,6 +542,10 @@
                         <td class="px-4 py-3 text-emerald-600 dark:text-emerald-400 font-medium">${log.item_name}</td>
                         <td class="px-4 py-3 font-bold dark:text-slate-200">${log.qty}</td>
                         <td class="px-4 py-3 text-slate-500 dark:text-slate-400">${log.device_summary || '-'}</td>
+                        <td class="px-4 py-3 text-right space-x-1">
+                            <button onclick="openEditLogModal('${log.id}')" class="px-2 py-1 bg-amber-50 dark:bg-amber-900/40 text-amber-600 text-xs rounded-lg"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="removeCheckoutLog('${log.id}')" class="px-2 py-1 text-rose-500 text-xs hover:bg-rose-50 dark:hover:bg-rose-900/40 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+                        </td>
                     </tr>
                 `;
             });
@@ -498,7 +556,7 @@
             tbody.innerHTML = "";
 
             if (restockLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">ยังไม่มีประวัติการเติมสต็อกในระบบ</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">ยังไม่มีประวัติการเติมสต็อกในระบบ</td></tr>`;
                 return;
             }
 
@@ -510,10 +568,92 @@
                         <td class="px-4 py-3 font-bold text-emerald-600 dark:text-emerald-400">${log.item_name}</td>
                         <td class="px-4 py-3 font-bold text-slate-800 dark:text-white">+${log.qty}</td>
                         <td class="px-4 py-3 text-slate-600 dark:text-slate-300">${log.supplier || '-'}</td>
+                        <td class="px-4 py-3 text-right space-x-1">
+                            <button onclick="openEditRestockModal('${log.id}')" class="px-2 py-1 bg-amber-50 dark:bg-amber-900/40 text-amber-600 text-xs rounded-lg"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="removeRestockLog('${log.id}')" class="px-2 py-1 text-rose-500 text-xs hover:bg-rose-50 dark:hover:bg-rose-900/40 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+                        </td>
                     </tr>
                 `;
             });
         }
+
+        // จัดการแก้ไข/ลบ ประวัติการเติมสต็อก
+        window.openEditRestockModal = (id) => {
+            const log = restockLogs.find(l => l.id == id);
+            if (!log) return;
+            document.getElementById('edit-restock-id').value = log.id;
+            document.getElementById('edit-restock-item-name').value = log.item_name;
+            document.getElementById('edit-restock-qty').value = log.qty;
+            document.getElementById('edit-restock-supplier').value = log.supplier || '';
+            document.getElementById('edit-restock-modal').classList.remove('hidden');
+        };
+
+        document.getElementById('close-edit-restock-btn').onclick = () => {
+            document.getElementById('edit-restock-modal').classList.add('hidden');
+        };
+
+        document.getElementById('save-edit-restock-btn').onclick = async () => {
+            const id = document.getElementById('edit-restock-id').value;
+            const item_name = document.getElementById('edit-restock-item-name').value.trim();
+            const qty = parseInt(document.getElementById('edit-restock-qty').value) || 0;
+            const supplier = document.getElementById('edit-restock-supplier').value.trim();
+
+            const { error } = await supabase.from('restock_logs').update({ item_name, qty, supplier }).eq('id', id);
+            if (error) {
+                alert("❌ เกิดข้อผิดพลาดในการแก้ไข");
+                return;
+            }
+
+            document.getElementById('edit-restock-modal').classList.add('hidden');
+            alert("✅ แก้ไขประวัติการเติมสต็อกสำเร็จ!");
+            loadAdminData();
+        };
+
+        window.removeRestockLog = async (id) => {
+            if (confirm("ต้องการลบประวัติการเติมสต็อกรายการนี้หรือไม่?")) {
+                await supabase.from('restock_logs').delete().eq('id', id);
+                loadAdminData();
+            }
+        };
+
+        // จัดการแก้ไข/ลบ ประวัติการเบิก
+        window.openEditLogModal = (id) => {
+            const log = logs.find(l => l.id == id);
+            if (!log) return;
+            document.getElementById('edit-log-id').value = log.id;
+            document.getElementById('edit-log-user').value = log.user_name;
+            document.getElementById('edit-log-item-name').value = log.item_name;
+            document.getElementById('edit-log-qty').value = log.qty;
+            document.getElementById('edit-log-modal').classList.remove('hidden');
+        };
+
+        document.getElementById('close-edit-log-btn').onclick = () => {
+            document.getElementById('edit-log-modal').classList.add('hidden');
+        };
+
+        document.getElementById('save-edit-log-btn').onclick = async () => {
+            const id = document.getElementById('edit-log-id').value;
+            const user_name = document.getElementById('edit-log-user').value.trim();
+            const item_name = document.getElementById('edit-log-item-name').value.trim();
+            const qty = parseInt(document.getElementById('edit-log-qty').value) || 0;
+
+            const { error } = await supabase.from('logs').update({ user_name, item_name, qty }).eq('id', id);
+            if (error) {
+                alert("❌ เกิดข้อผิดพลาดในการแก้ไข");
+                return;
+            }
+
+            document.getElementById('edit-log-modal').classList.add('hidden');
+            alert("✅ แก้ไขประวัติการเบิกสำเร็จ!");
+            loadAdminData();
+        };
+
+        window.removeCheckoutLog = async (id) => {
+            if (confirm("ต้องการลบประวัติการเบิกรายการนี้หรือไม่?")) {
+                await supabase.from('logs').delete().eq('id', id);
+                loadAdminData();
+            }
+        };
 
         document.getElementById('log-search-input').onkeyup = filterAndRenderLogs;
         document.getElementById('log-search-input').oninput = filterAndRenderLogs;
