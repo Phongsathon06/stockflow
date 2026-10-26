@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StockFlow - รพ.สต.ศรีสุข (เบิกพัสดุสำนักงาน)</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
@@ -11,16 +12,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style> body { font-family: 'Sarabun', sans-serif; } </style>
-
-    <!-- Favicon / Logo บนแท็บเบราว์เซอร์ -->
-    <link rel="icon" type="image/png" href="logo.png">
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen pb-12 transition-colors duration-200">
+    <!-- Custom Toast Alert (สำหรับแจ้งเตือนสวยๆ แทน alert ปกติ) -->
+    <div id="toast-alert" class="fixed top-5 right-5 z-50 transform translate-x-full transition-all duration-300 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <div>
+            <div id="toast-title" class="font-bold text-xs">แจ้งเตือนระบบ</div>
+            <div id="toast-message" class="text-xs text-slate-300">ข้อความแจ้งเตือน</div>
+        </div>
+    </div>
+
     <header class="bg-emerald-700 dark:bg-emerald-900 text-white shadow-md transition-colors duration-200">
         <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-bold"><i class="fa-solid fa-boxes-stacked mr-2"></i>ระบบเบิกพัสดุสำนักงาน รพ.สต.ศรีสุข</h1>
-                <p class="text-xs text-emerald-100">StockFlow - ระบบจัดการคลังพัสดุอัจฉริยะ</p>
+            <div class="flex items-center gap-3">
+                <img src="logo.png" alt="Logo" class="w-10 h-10 object-contain rounded-xl bg-white p-1 shadow-sm" onerror="this.style.display='none'">
+                <div>
+                    <h1 class="text-xl font-bold"><i class="fa-solid fa-boxes-stacked mr-2"></i>ระบบเบิกพัสดุสำนักงาน รพ.สต.ศรีสุข</h1>
+                    <p class="text-xs text-emerald-100">StockFlow - ระบบจัดการคลังพัสดุอัจฉริยะ</p>
+                </div>
             </div>
             <div class="flex items-center gap-2">
                 <button id="theme-toggle-btn" class="bg-emerald-800 hover:bg-emerald-900 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1">
@@ -94,6 +104,31 @@
         let inventory = [];
         let currentUser = localStorage.getItem('stockflow_user') || '';
 
+        // ฟังก์ชันแสดงแจ้งเตือนแบบสวยงาม (แทน alert 127.0.0.1)
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast-alert');
+            const msgEl = document.getElementById('toast-message');
+            const iconEl = document.getElementById('toast-icon');
+            const titleEl = document.getElementById('toast-title');
+
+            msgEl.innerText = message;
+            if (type === 'error') {
+                iconEl.className = "fa-solid fa-triangle-exclamation text-rose-400 text-lg";
+                titleEl.innerText = "แจ้งเตือนความปลอดภัย / ข้อผิดพลาด";
+            } else if (type === 'warning') {
+                iconEl.className = "fa-solid fa-circle-exclamation text-amber-400 text-lg";
+                titleEl.innerText = "คำเตือน";
+            } else {
+                iconEl.className = "fa-solid fa-circle-check text-emerald-400 text-lg";
+                titleEl.innerText = "สำเร็จ";
+            }
+
+            toast.classList.remove('translate-x-full');
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 3500);
+        }
+
         const htmlElement = document.documentElement;
         const themeToggleBtn = document.getElementById('theme-toggle-btn');
         const themeIcon = document.getElementById('theme-icon');
@@ -141,13 +176,13 @@
         document.getElementById('save-user-btn').onclick = () => {
             const inputName = document.getElementById('global-user-input').value.trim();
             if (!inputName) {
-                alert('กรุณากรอกชื่อ-นามสกุลก่อนบันทึก');
+                showToast('กรุณากรอกชื่อ-นามสกุลก่อนบันทึก', 'warning');
                 return;
             }
             currentUser = inputName;
             localStorage.setItem('stockflow_user', currentUser);
             updateUIUser();
-            alert('✅ บันทึกชื่อผู้เบิกเรียบร้อยแล้ว');
+            showToast('บันทึกชื่อผู้เบิกเรียบร้อยแล้ว');
         };
 
         async function loadData() {
@@ -193,7 +228,7 @@
 
         window.openCheckoutModal = (id) => {
             if (!currentUser) {
-                alert('⚠️ กรุณากรอกชื่อผู้เบิกที่ด้านบนก่อนทำการเบิกพัสดุครับ');
+                showToast('⚠️ กรุณากรอกชื่อผู้เบิกที่ด้านบนก่อนทำการเบิกพัสดุครับ', 'warning');
                 document.getElementById('global-user-input').focus();
                 return;
             }
@@ -216,10 +251,16 @@
             const id = document.getElementById('checkout-item-id').value;
             const qty = parseInt(document.getElementById('checkout-qty').value);
 
-            if (!qty || qty <= 0) return alert("กรุณาระบุจำนวนที่ถูกต้อง");
+            if (!qty || qty <= 0) {
+                showToast("กรุณาระบุจำนวนที่ถูกต้อง", 'warning');
+                return;
+            }
 
             const item = inventory.find(i => i.id === id);
-            if (item.stock < qty) return alert("❌ พัสดุในคลังไม่พอให้เบิก!");
+            if (item.stock < qty) {
+                showToast("❌ พัสดุในคลังไม่พอให้เบิก!", 'error');
+                return;
+            }
 
             const newStock = item.stock - qty;
             await updateItemStock(id, newStock, item.supplier);
@@ -240,13 +281,14 @@
             });
 
             document.getElementById('checkout-modal').classList.add('hidden');
-            alert("✅ เบิกพัสดุสำนักงานสำเร็จ!");
+            showToast("✅ เบิกพัสดุสำนักงานสำเร็จ!");
+            
+            loadData();
         };
 
         document.getElementById('search-input').onkeyup = filterAndRender;
         document.getElementById('search-input').oninput = filterAndRender;
 
-        // เปิด Realtime Listener ฟังการเปลี่ยนแปลงตาราง items
         supabase
             .channel('public:items')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, payload => {
