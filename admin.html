@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockFlow - แอดมิน รพ.สต.ศรีสุข</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- SheetJS (xlsx) Library สำหรับ Export ไฟล์ Excel 2 ชีท -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style> body { font-family: 'Sarabun', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
+    <!-- Passcode Overlay -->
+    <div id="passcode-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl dark:border dark:border-slate-700">
+            <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 text-lg">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2 class="text-lg font-bold text-slate-800 dark:text-white mb-1">ยืนยันตัวตนแอดมิน</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">กรุณากรอกรหัสผ่านเพื่อจัดการคลังเวชภัณฑ์</p>
+            <input type="password" id="passcode-input" placeholder="รหัสผ่าน (ค่าเริ่มต้น 1234)" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-lg tracking-widest mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
+            <button id="submit-passcode-btn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium text-sm transition shadow-md">เข้าสู่ระบบ</button>
+            <a href="index.html" class="block text-xs text-slate-400 mt-4 hover:underline">← กลับหน้าหลัก (เบิกพัสดุ)</a>
+        </div>
+    </div>
+
+    <!-- Admin Content -->
+    <header class="bg-slate-900 text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-lg font-bold"><i class="fa-solid fa-sliders mr-2"></i>ระบบจัดการคลัง - รพ.สต.ศรีสุข</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- ปุ่มสลับธีม สว่าง/มืด -->
+                <button id="theme-toggle-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i> <span id="theme-text">โหมดมืด</span>
+                </button>
+                <button id="open-add-modal-btn" class="bg-emerald-600 hover:bg-emerald-700 text-xs px-3 py-2 rounded-lg font-medium transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มรายการใหม่</button>
+                <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg font-medium transition">ออกสู่หน้าเว็บ</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 mt-6">
+        <!-- Tabs -->
+        <div class="flex space-x-2 mb-4 border-b border-slate-200 dark:border-slate-800 pb-2">
+            <button id="tab-inventory-btn" class="px-4 py-2 bg-emerald-600 text-white text-xs rounded-xl font-medium shadow-sm transition">จัดการคลังเวชภัณฑ์</button>
+            <button id="tab-logs-btn" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-xl font-medium transition">ประวัติการเบิก</button>
+        </div>
+
+        <!-- Inventory Tab Content -->
+        <div id="tab-inventory-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-200">
+            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row gap-3">
+                <input type="text" id="admin-search-input" placeholder="ค้นหาเวชภัณฑ์ในคลัง..." class="w-full md:w-80 px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none dark:text-white">
+                <select id="admin-category-filter" class="w-full md:w-64 px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none dark:text-white">
+                    <option value="">-- ทุกหมวดหมู่ --</option>
+                </select>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 dark:bg-slate-900/50 text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            <th class="px-4 py-3">รายการ</th>
+                            <th class="px-4 py-3">หมวดหมู่</th>
+                            <th class="px-4 py-3">คงเหลือ</th>
+                            <th class="px-4 py-3">แหล่งที่มา/ผู้จำหน่าย</th>
+                            <th class="px-4 py-3 text-right">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-items-table" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Logs Tab Content -->
+        <div id="tab-logs-content" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden hidden transition-colors duration-200">
+            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-3">
+                <div class="relative w-full md:w-80">
+                    <i class="fa-solid fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="log-search-input" placeholder="ค้นหาชื่อผู้เบิก หรือชื่อรายการ..." class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
+                </div>
+                <button id="export-excel-btn" class="w-full md:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-xl font-medium transition flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-file-excel"></i> ส่งออกเป็น Excel (.xlsx)
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 dark:bg-slate-900/50 text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            <th class="px-4 py-3">เวลาที่เบิก</th>
+                            <th class="px-4 py-3">ผู้เบิก</th>
+                            <th class="px-4 py-3">รายการเวชภัณฑ์</th>
+                            <th class="px-4 py-3">จำนวน</th>
+                            <th class="px-4 py-3">รุ่นอุปกรณ์ / เบราว์เซอร์</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-table" class="divide-y divide-slate-100 dark:divide-slate-700 text-xs"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Restock Modal -->
+    <div id="restock-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl dark:border dark:border-slate-700">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">เติมสต็อกเวชภัณฑ์</h3>
+            <input type="hidden" id="restock-id">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">รายการ</label>
+                    <input type="text" id="restock-name" disabled class="w-full p-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-slate-400">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">จำนวนที่ต้องการเพิ่ม (+)</label>
+                    <input type="number" id="restock-add-qty" value="10" min="1" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-600 dark:text-slate-300 mb-1">ผู้จำหน่าย / แหล่งที่มา</label>
+                    <input type="text" id="restock-supplier" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+                </div>
+            </div>
+            <div class="flex space-x-2 mt-6">
+                <button id="close-restock-btn" class="flex-1 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-xs">ยกเลิก</button>
+                <button id="save-restock-btn" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-medium text-xs shadow-md">บันทึกการเติม</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="add-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl dark:border dark:border-slate-700">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">เพิ่มเวชภัณฑ์ใหม่</h3>
+            <div class="space-y-3">
+                <input type="text" id="new-name" placeholder="ชื่อเวชภัณฑ์/พัสดุ" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+                
+                <div>
+                    <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">หมวดหมู่พัสดุใน รพ.สต.</label>
+                    <select id="new-category-select" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mb-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
+                        <option value="">-- เลือกหมวดหมู่มาตรฐาน รพ.สต. --</option>
+                        <option value="เวชภัณฑ์ยา">เวชภัณฑ์ยา</option>
+                        <option value="เวชภัณฑ์มิใช่ยา">เวชภัณฑ์มิใช่ยา</option>
+                        <option value="วัสดุการแพทย์/ทำแผล">วัสดุการแพทย์/ทำแผล</option>
+                        <option value="วัสดุทันตกรรม">วัสดุทันตกรรม</option>
+                        <option value="วัสดุงานบ้านงานครัว/สำนักงาน">วัสดุงานบ้านงานครัว/สำนักงาน</option>
+                        <option value="วัสดุคอมพิวเตอร์/IT">วัสดุคอมพิวเตอร์/IT</option>
+                        <option value="วัสดุไฟฟ้า/วิทยุ">วัสดุไฟฟ้า/วิทยุ</option>
+                        <option value="วัสดุวิทยาศาสตร์/การแพทย์">วัสดุวิทยาศาสตร์/การแพทย์</option>
+                    </select>
+                    <input type="text" id="new-category-input" placeholder="หรือพิมพ์หมวดหมู่ใหม่เองที่นี่..." class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="new-stock" placeholder="จำนวนเริ่มต้น" class="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+                    
+                    <div>
+                        <select id="new-unit-select" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mb-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
+                            <option value="">-- เลือกหน่วยนับ --</option>
+                            <option value="กล่อง">กล่อง</option>
+                            <option value="ชิ้น">ชิ้น</option>
+                            <option value="แพ็ค">แพ็ค</option>
+                            <option value="ขวด">ขวด</option>
+                            <option value="ซอง">ซอง</option>
+                            <option value="ม้วน">ม้วน</option>
+                            <option value="แผง">แผง</option>
+                            <option value="หลอด">หลอด</option>
+                            <option value="กระปุก">กระปุก</option>
+                            <option value="ถุง">ถุง</option>
+                            <option value="ห่อ">ห่อ</option>
+                            <option value="รีม">รีม (กระดาษ)</option>
+                            <option value="เล่ม">เล่ม</option>
+                            <option value="แผ่น">แผ่น</option>
+                            <option value="ชุด">ชุด</option>
+                            <option value="อัน">อัน</option>
+                            <option value="แกลลอน">แกลลอน</option>
+                            <option value="ลิตร">ลิตร</option>
+                            <option value="มิลลิลิตร (ml)">มิลลิลิตร (ml)</option>
+                        </select>
+                        <input type="text" id="new-unit-input" placeholder="หรือพิมพ์หน่วย..." class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
+                    </div>
+                </div>
+
+                <input type="number" id="new-min" placeholder="แจ้งเตือนขั้นต่ำ (ค่าเริ่มต้น: 5 ชิ้น)" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+                <input type="text" id="new-supplier" placeholder="ผู้จำหน่าย / แหล่งที่มา" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-white">
+            </div>
+            <div class="flex space-x-2 mt-6">
+                <button id="close-add-btn" class="flex-1 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-xs">ยกเลิก</button>
+                <button id="save-add-btn" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-medium text-xs shadow-md">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Integration -->
+    <script type="module">
+        import { getItems, updateItemStock, addNewItem, deleteItem, getLogs, supabase } from './supabase.js';
+
+        let inventory = [];
+        let logs = [];
+
+        // ระบบจัดการธีม (Dark / Light Mode)
+        const htmlElement = document.documentElement;
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                htmlElement.classList.add('dark');
+                themeIcon.className = "fa-solid fa-sun";
+                themeText.innerText = "โหมดสว่าง";
+                localStorage.setItem('theme', 'dark');
+            } else {
+                htmlElement.classList.remove('dark');
+                themeIcon.className = "fa-solid fa-moon";
+                themeText.innerText = "โหมดมืด";
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            applyTheme(savedTheme === 'dark');
+        } else {
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(systemPrefersDark);
+        }
+
+        themeToggleBtn.onclick = () => {
+            const isDark = !htmlElement.classList.contains('dark');
+            applyTheme(isDark);
+        };
+
+        async function handleAdminLogin() {
+            const inputPass = document.getElementById('passcode-input').value;
+            
+            const { data, error } = await supabase
+                .from('settings')
+                .select('value')
+                .eq('key', 'admin_passcode')
+                .single();
+
+            const correctPass = data ? data.value : '1234';
+
+            if (inputPass === correctPass) {
+                document.getElementById('passcode-overlay').classList.add('hidden');
+                loadAdminData();
+            } else {
+                alert("❌ รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง!");
+            }
+        }
+
+        document.getElementById('submit-passcode-btn').onclick = handleAdminLogin;
+        document.getElementById('passcode-input').onkeypress = (e) => {
+            if (e.key === 'Enter') handleAdminLogin();
+        };
+
+        async function loadAdminData() {
+            inventory = await getItems();
+            logs = await getLogs();
+            updateAdminCategoryFilter();
+            renderAdminTable();
+            renderLogsTable(logs);
+        }
+
+        function updateAdminCategoryFilter() {
+            const select = document.getElementById('admin-category-filter');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- ทุกหมวดหมู่ --</option>';
+            const categories = [...new Set(inventory.map(i => i.category).filter(Boolean))];
+            categories.forEach(cat => {
+                select.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+            select.value = currentVal;
+        }
+
+        document.getElementById('new-category-select').onchange = (e) => {
+            if (e.target.value) document.getElementById('new-category-input').value = e.target.value;
+        };
+
+        document.getElementById('new-unit-select').onchange = (e) => {
+            if (e.target.value) document.getElementById('new-unit-input').value = e.target.value;
+        };
+
+        function renderAdminTable() {
+            const search = document.getElementById('admin-search-input').value.toLowerCase();
+            const selectedCategory = document.getElementById('admin-category-filter').value;
+            const tbody = document.getElementById('admin-items-table');
+            tbody.innerHTML = "";
+
+            const filtered = inventory.filter(item => {
+                const matchKeyword = item.name.toLowerCase().includes(search) || (item.supplier && item.supplier.toLowerCase().includes(search));
+                const matchCategory = !selectedCategory || item.category === selectedCategory;
+                return matchKeyword && matchCategory;
+            });
+
+            filtered.forEach(item => {
+                const isLow = item.stock <= item.min_stock;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 ${isLow ? 'bg-rose-50/40 dark:bg-rose-950/20' : ''}">
+                        <td class="px-4 py-3"><div class="font-bold text-slate-800 dark:text-white">${item.name}</div><div class="text-[10px] text-slate-400 font-mono">${item.id}</div></td>
+                        <td class="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">${item.category}</td>
+                        <td class="px-4 py-3">
+                            <span class="font-bold ${isLow ? 'text-rose-600 dark:text-rose-400 text-base' : 'text-emerald-600 dark:text-emerald-400'}">${item.stock}</span> 
+                            <span class="text-xs text-slate-500 dark:text-slate-400">${item.unit}</span>
+                            ${isLow ? '<span class="ml-2 text-[10px] bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-full font-bold">ใกล้หมด</span>' : ''}
+                        </td>
+                        <td class="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">${item.supplier || '-'}</td>
+                        <td class="px-4 py-3 text-right space-x-1">
+                            <button onclick="openRestockModal('${item.id}')" class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs rounded-lg font-medium">+เติมสต็อก</button>
+                            <button onclick="removeItem('${item.id}')" class="px-2 py-1 text-rose-500 text-xs hover:bg-rose-50 dark:hover:bg-rose-900/40 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderLogsTable(dataLogs) {
+            const tbody = document.getElementById('logs-table');
+            tbody.innerHTML = "";
+
+            if (dataLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">ไม่พบประวัติการเบิกจ่าย</td></tr>`;
+                return;
+            }
+
+            dataLogs.forEach(log => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 text-xs">
+                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400">${log.timestamp}</td>
+                        <td class="px-4 py-3 font-bold text-slate-800 dark:text-white">${log.user_name}</td>
+                        <td class="px-4 py-3 text-emerald-600 dark:text-emerald-400 font-medium">${log.item_name}</td>
+                        <td class="px-4 py-3 font-bold dark:text-slate-200">${log.qty}</td>
+                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400">${log.device_summary || '-'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('log-search-input').onkeyup = (e) => {
+            const keyword = e.target.value.toLowerCase();
+            const filteredLogs = logs.filter(log => 
+                log.user_name.toLowerCase().includes(keyword) || 
+                log.item_name.toLowerCase().includes(keyword)
+            );
+            renderLogsTable(filteredLogs);
+        };
+
+        // ฟังก์ชันส่งออกไฟล์ Excel (.xlsx) แบบ 2 ชีทในไฟล์เดียว
+        document.getElementById('export-excel-btn').onclick = () => {
+            if (!inventory.length && !logs.length) {
+                alert("ไม่มีข้อมูลสำหรับการส่งออก");
+                return;
+            }
+
+            // 1. สร้าง Workbook ใหม่
+            const wb = XLSX.utils.book_new();
+
+            // 2. ชีทที่ 1: รายการคลังเวชภัณฑ์ (Inventory)
+            const inventoryData = inventory.map(item => ({
+                "รหัสพัสดุ (SKU)": item.id,
+                "ชื่อเวชภัณฑ์ / พัสดุ": item.name,
+                "หมวดหมู่": item.category || 'ทั่วไป',
+                "คงเหลือ": item.stock,
+                "หน่วยนับ": item.unit || 'ชิ้น',
+                "ขั้นต่ำเตือน": item.min_stock,
+                "ผู้จำหน่าย/แหล่งที่มา": item.supplier || '-'
+            }));
+            const wsInventory = XLSX.utils.json_to_sheet(inventoryData);
+            XLSX.utils.book_append_sheet(wb, wsInventory, "คลังเวชภัณฑ์");
+
+            // 3. ชีทที่ 2: ประวัติการเบิก-จ่าย (Activity Logs)
+            const logsData = logs.map(log => ({
+                "เวลาที่เบิก": log.timestamp || '',
+                "ผู้เบิก": log.user_name || '',
+                "รายการเวชภัณฑ์": log.item_name || '',
+                "จำนวน": log.qty || 0,
+                "รุ่นอุปกรณ์ / เบราว์เซอร์": log.device_summary || '-'
+            }));
+            const wsLogs = XLSX.utils.json_to_sheet(logsData);
+            XLSX.utils.book_append_sheet(wb, wsLogs, "ประวัติการเบิก-จ่าย");
+
+            // 4. บันทึกและดาวน์โหลดไฟล์ .xlsx
+            const fileName = `StockFlow_Srisuk_Report_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        };
+
+        window.openRestockModal = (id) => {
+            const item = inventory.find(i => i.id === id);
+            document.getElementById('restock-id').value = item.id;
+            document.getElementById('restock-name').value = item.name;
+            document.getElementById('restock-supplier').value = item.supplier || '';
+            document.getElementById('restock-modal').classList.remove('hidden');
+        };
+
+        document.getElementById('save-restock-btn').onclick = async () => {
+            const id = document.getElementById('restock-id').value;
+            const addQty = parseInt(document.getElementById('restock-add-qty').value) || 0;
+            const supplier = document.getElementById('restock-supplier').value;
+
+            const item = inventory.find(i => i.id === id);
+            const newStock = item.stock + addQty;
+
+            await updateItemStock(id, newStock, supplier);
+            document.getElementById('restock-modal').classList.add('hidden');
+            alert("✅ เติมสต็อกเรียบร้อยแล้ว!");
+            loadAdminData();
+        };
+
+        document.getElementById('open-add-modal-btn').onclick = () => {
+            document.getElementById('new-category-input').value = '';
+            document.getElementById('new-unit-input').value = '';
+            document.getElementById('add-modal').classList.remove('hidden');
+        };
+        document.getElementById('close-add-btn').onclick = () => document.getElementById('add-modal').classList.add('hidden');
+        document.getElementById('close-restock-btn').onclick = () => document.getElementById('restock-modal').classList.add('hidden');
+
+        document.getElementById('save-add-btn').onclick = async () => {
+            const name = document.getElementById('new-name').value.trim();
+            const category = document.getElementById('new-category-input').value.trim();
+            const unit = document.getElementById('new-unit-input').value.trim();
+
+            if (!name) return alert("กรุณากรอกชื่อเวชภัณฑ์");
+
+            const newItem = {
+                id: 'SKU-' + String(inventory.length + 1).padStart(3, '0'),
+                name: name,
+                category: category || 'ทั่วไป',
+                unit: unit || 'ชิ้น',
+                stock: parseInt(document.getElementById('new-stock').value) || 0,
+                min_stock: parseInt(document.getElementById('new-min').value) || 5,
+                supplier: document.getElementById('new-supplier').value || ''
+            };
+
+            await addNewItem(newItem);
+            document.getElementById('add-modal').classList.add('hidden');
+            alert("✅ เพิ่มรายการใหม่สำเร็จ!");
+            loadAdminData();
+        };
+
+        window.removeItem = async (id) => {
+            if (confirm("ต้องการลบรายการนี้ออกจากระบบหรือไม่?")) {
+                await deleteItem(id);
+                loadAdminData();
+            }
+        };
+
+        document.getElementById('tab-inventory-btn').onclick = () => {
+            document.getElementById('tab-inventory-content').classList.remove('hidden');
+            document.getElementById('tab-logs-content').classList.add('hidden');
+            document.getElementById('tab-inventory-btn').className = "px-4 py-2 bg-emerald-600 text-white text-xs rounded-xl font-medium shadow-sm transition";
+            document.getElementById('tab-logs-btn').className = "px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-xl font-medium transition";
+        };
+
+        document.getElementById('tab-logs-btn').onclick = () => {
+            document.getElementById('tab-inventory-content').classList.add('hidden');
+            document.getElementById('tab-logs-content').classList.remove('hidden');
+            document.getElementById('tab-logs-btn').className = "px-4 py-2 bg-emerald-600 text-white text-xs rounded-xl font-medium shadow-sm transition";
+            document.getElementById('tab-inventory-btn').className = "px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-xl font-medium transition";
+        };
+
+        document.getElementById('admin-search-input').onkeyup = renderAdminTable;
+        document.getElementById('admin-category-filter').onchange = renderAdminTable;
+    </script>
+</body>
+</html>
